@@ -30,9 +30,9 @@ export default function Footer() {
     <footer className="w-full bg-[#111111] text-white">
 
       {/* Main Footer */}
-      <div className="mx-auto max-w-7xl px-5 py-16 md:px-10 md:py-20">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-5 sm:py-16 md:px-10 md:py-20">
 
-        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-12 lg:grid-cols-4">
 
           {/* Brand Section */}
           <div>
@@ -47,13 +47,13 @@ export default function Footer() {
               </p>
             </Link>
 
-            <p className="mt-6 max-w-xs text-sm leading-7 text-gray-400">
+            <p className="mt-4 max-w-xs text-sm leading-6 text-gray-400 sm:mt-6 sm:leading-7">
               Redefining everyday fashion with modern designs,
               premium comfort and timeless style.
             </p>
 
             {/* Social Links */}
-            <div className="mt-7 flex items-center gap-3">
+            <div className="mt-5 flex items-center gap-3 sm:mt-7">
 
               {/* Facebook */}
               <a
@@ -61,7 +61,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-sm font-bold transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-sm font-bold transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black sm:h-10 sm:w-10"
               >
                 f
               </a>
@@ -72,7 +72,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-lg transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-lg transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black sm:h-10 sm:w-10"
               >
                 ◎
               </a>
@@ -83,21 +83,20 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-xs font-bold transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-xs font-bold transition duration-300 hover:border-[#FFE500] hover:bg-[#FFE500] hover:text-black sm:h-10 sm:w-10"
               >
                 YT
               </a>
-
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="mb-6 text-sm font-bold uppercase tracking-widest">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest sm:mb-6">
               Quick Links
             </h3>
 
-            <ul className="space-y-4">
+            <ul className="space-y-3 sm:space-y-4">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <Link
@@ -113,11 +112,11 @@ export default function Footer() {
 
           {/* Customer Support */}
           <div>
-            <h3 className="mb-6 text-sm font-bold uppercase tracking-widest">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest sm:mb-6">
               Customer Support
             </h3>
 
-            <ul className="space-y-4">
+            <ul className="space-y-3 sm:space-y-4">
               {supportLinks.map((link) => (
                 <li key={link.name}>
                   <Link
@@ -133,11 +132,11 @@ export default function Footer() {
 
           {/* Contact Information */}
           <div>
-            <h3 className="mb-6 text-sm font-bold uppercase tracking-widest">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-widest sm:mb-6">
               Get In Touch
             </h3>
 
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
 
               {/* Location */}
               <div className="flex items-start gap-3">
@@ -156,25 +155,31 @@ export default function Footer() {
                 href="tel:+8801XXXXXXXXX"
                 className="flex items-center gap-3 text-sm text-gray-400 transition hover:text-[#FFE500]"
               >
-                <Phone size={18} className="shrink-0 text-[#FFE500]" />
+                <Phone
+                  size={18}
+                  className="shrink-0 text-[#FFE500]"
+                />
                 +880 1XXXXXXXXX
               </a>
 
               {/* Email */}
               <a
                 href="mailto:support@veloroutfits.com"
-                className="flex items-center gap-3 text-sm text-gray-400 transition hover:text-[#FFE500]"
+                className="flex items-start gap-3 text-sm text-gray-400 transition hover:text-[#FFE500]"
               >
-                <Mail size={18} className="shrink-0 text-[#FFE500]" />
+                <Mail
+                  size={18}
+                  className="mt-0.5 shrink-0 text-[#FFE500]"
+                />
+
                 <span className="break-all">
                   support@veloroutfits.com
                 </span>
               </a>
-
             </div>
 
             {/* Payment Methods */}
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
                 Payment Methods
               </p>
@@ -183,7 +188,7 @@ export default function Footer() {
                 {["COD", "bKash", "Nagad"].map((method) => (
                   <span
                     key={method}
-                    className="rounded border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-300"
+                    className="rounded border border-white/10 px-2.5 py-1.5 text-xs font-medium text-gray-300 sm:px-3"
                   >
                     {method}
                   </span>
@@ -191,30 +196,28 @@ export default function Footer() {
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Brand Statement */}
-        <div className="mt-16 border-t border-white/10 pt-10">
-          <p className="text-center text-xs font-semibold tracking-[0.25em] text-gray-500 md:text-sm">
+        <div className="mt-10 border-t border-white/10 pt-6 sm:mt-16 sm:pt-10">
+          <p className="text-center text-[9px] font-semibold tracking-[0.15em] text-gray-500 sm:text-xs sm:tracking-[0.25em] md:text-sm">
             DRESS BETTER. FEEL BETTER. BE VELOR.
           </p>
         </div>
-
       </div>
 
       {/* Bottom Footer */}
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row md:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-5 sm:py-6 md:flex-row md:px-10">
 
           {/* Copyright */}
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-[10px] text-gray-500 sm:text-xs">
             © {new Date().getFullYear()} VELOR OUTFITS.
             All rights reserved.
           </p>
 
           {/* Bottom Text */}
-          <p className="text-xs text-gray-500">
+          <p className="text-center text-[10px] text-gray-500 sm:text-xs">
             Designed for modern living.
           </p>
 
@@ -227,15 +230,13 @@ export default function Footer() {
                 behavior: "smooth",
               })
             }
-            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:text-[#FFE500]"
+            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400 transition hover:text-[#FFE500] sm:text-xs"
           >
             Back to Top
-            <ArrowUp size={15} />
+            <ArrowUp size={14} />
           </button>
-
         </div>
       </div>
-
     </footer>
   );
 }

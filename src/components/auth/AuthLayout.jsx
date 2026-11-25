@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 
@@ -8,8 +9,8 @@ export default function AuthLayout({
   children,
 }) {
   return (
-    <main className="w-full min-h-[calc(100vh-80px)] bg-[#f5f3ee] px-3 pt-6 pb-10 sm:px-6 sm:pt-8">
-      <div className="mx-auto w-full max-w-[460px] rounded-2xl bg-white px-5 py-6 shadow-[0_10px_50px_rgba(0,0,0,0.06)] sm:px-10 sm:py-7 md:px-12">
+    <main className="w-full bg-[#f5f3ee] px-3 pt-4 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
+      <div className="mx-auto w-full max-w-[460px] rounded-2xl bg-white px-5 py-5 shadow-[0_10px_50px_rgba(0,0,0,0.06)] sm:px-10 sm:py-7 md:px-12">
 
         {/* Logo */}
         {/* <div className="mb-6 flex items-center justify-between">
@@ -26,7 +27,7 @@ export default function AuthLayout({
         </div> */}
 
         {/* Heading */}
-        <div className="mb-6">
+        <div className="mb-5">
           {/* <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f0e9] text-[#8c7354]">
             <ShieldCheck size={20} />
           </div>

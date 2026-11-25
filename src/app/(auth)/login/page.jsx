@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
 import {
   Mail,
   LockKeyhole,
@@ -28,6 +29,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Handle input changes
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -39,8 +41,10 @@ export default function LoginPage() {
     setError("");
   }
 
+  // Handle Login
   async function handleSubmit(e) {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
@@ -57,10 +61,13 @@ export default function LoginPage() {
         return;
       }
 
+      // Successful Login
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      setError(
+        err.message || "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -77,7 +84,7 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Email */}
+        {/* Email Address */}
         <div>
           <label
             htmlFor="email"
@@ -87,7 +94,10 @@ export default function LoginPage() {
           </label>
 
           <div className="flex items-center rounded-lg border border-gray-200 transition focus-within:border-[#9b805e] focus-within:ring-2 focus-within:ring-[#c6a77b]/10">
-            <Mail className="ml-3.5 shrink-0 text-gray-400" size={17} />
+            <Mail
+              className="ml-3.5 shrink-0 text-gray-400"
+              size={17}
+            />
 
             <input
               id="email"
@@ -122,7 +132,10 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center rounded-lg border border-gray-200 transition focus-within:border-[#9b805e] focus-within:ring-2 focus-within:ring-[#c6a77b]/10">
-            <LockKeyhole className="ml-3.5 shrink-0 text-gray-400" size={17} />
+            <LockKeyhole
+              className="ml-3.5 shrink-0 text-gray-400"
+              size={17}
+            />
 
             <input
               id="password"
@@ -138,26 +151,34 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPassword((prev) => !prev)}
               className="mr-3.5 shrink-0 text-gray-400 transition hover:text-black"
-              aria-label="Toggle password visibility"
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
             >
-              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              {showPassword ? (
+                <EyeOff size={17} />
+              ) : (
+                <Eye size={17} />
+              )}
             </button>
           </div>
         </div>
 
-        {/* Error */}
+        {/* Login Error */}
         {error && (
           <div
             role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-600"
           >
             {error}
           </div>
         )}
 
-        {/* Submit */}
+        {/* Login Button */}
         <button
           type="submit"
           disabled={loading}
@@ -174,7 +195,7 @@ export default function LoginPage() {
         </button>
 
         {/* Register Link */}
-        <div className="border-t border-gray-100 pt-5 text-center">
+        <div className="border-t border-gray-100 pt-4 text-center">
           <p className="text-sm text-gray-500">
             New to VELOR?{" "}
             <Link
