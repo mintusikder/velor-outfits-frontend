@@ -1,269 +1,665 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useSession } from "@/lib/auth-client";
-import { logoutUser } from "@/features/auth/auth-actions";
 
 import {
   UserRound,
   Mail,
+  Phone,
+  MapPin,
   ShieldCheck,
-  CalendarDays,
+  Package,
   LogOut,
+  Pencil,
+  Save,
+  X,
   LoaderCircle,
-  ShoppingBag,
-  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 
-function formatDate(dateValue) {
-  if (!dateValue) return "Not available";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useSession } from "@/lib/auth-client";
+import { logoutUser } from "@/features/auth/auth-actions";
+import {
+  getMyProfile,
+  updateMyProfile,
+} from "@/services/user-service";
 
-  const date = new Date(dateValue);
+// ========================================
+// HELPER: MEMBER DATE
+// ========================================
+function formatDate(date) {
+  if (!date) return "Not available";
 
-  if (Number.isNaN(date.getTime())) {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
     return "Not available";
   }
 
-  return date.toLocaleDateString("en-US", {
+  return parsedDate.toLocaleDateString("en-BD", {
     year: "numeric",
-    month: "short",
+    month: "long",
     day: "numeric",
   });
 }
 
-function getInitials(name) {
-  if (!name) return "U";
-
-  return name
-    .trim()
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-export default function ProfilePage() {
+// ========================================
+// PROFILE CONTENT
+// ========================================
+function ProfileContent() {
   const router = useRouter();
 
-  const { data: session, isPending } = useSession();
-  const user = session?.user;
+  // Better Auth session (for supplementary account metadata)
+  const { data: session } = useSession();
 
-  const [logoutLoading, setLogoutLoading] = useState(false);
-  const [logoutError, setLogoutError] = useState("");
+  // Profile API states
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      setLogoutLoading(true);
-      setLogoutError("");
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
 
-      const result = await logoutUser();
+  // Form data
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
 
-      if (result?.error) {
-        throw new Error(result.error.message || "Logout failed");
+  // Messages
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // ========================================
+  // LOAD PROFILE FROM BACKEND
+  // ========================================
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await getMyProfile();
+
+        if (!isMounted) return;
+
+        const user = response.user;
+
+        setProfile(user);
+
+        setFormData({
+          name: user.name || "",
+          phone: user.phone || "",
+          address: user.address || "",
+        });
+      } catch (err) {
+        if (!isMounted) return;
+
+        console.error("Profile loading error:", err);
+
+        if (err.status === 401) {
+          router.replace("/login");
+          return;
+        }
+
+        setError(err.message || "Failed to load profile.");
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("Profile logout error:", error);
-
-      setLogoutError(
-        error.message || "Unable to logout. Please try again."
-      );
-    } finally {
-      setLogoutLoading(false);
     }
-  };
 
-  // ProtectedRoute handles unauthenticated users.
-  // Avoid rendering the profile before session is available.
-  if (isPending || !user) {
-    return null;
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  // ========================================
+  // FORM INPUT CHANGE
+  // ========================================
+  function handleChange(e) {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
-  const initials = getInitials(user.name);
+  // ========================================
+  // EDIT PROFILE
+  // ========================================
+  function handleEdit() {
+    setError("");
+    setSuccess("");
 
+    setFormData({
+      name: profile?.name || "",
+      phone: profile?.phone || "",
+      address: profile?.address || "",
+    });
+
+    setIsEditing(true);
+  }
+
+  // ========================================
+  // CANCEL EDIT
+  // ========================================
+  function handleCancel() {
+    setFormData({
+      name: profile?.name || "",
+      phone: profile?.phone || "",
+      address: profile?.address || "",
+    });
+
+    setIsEditing(false);
+    setError("");
+    setSuccess("");
+  }
+
+  // ========================================
+  // SAVE PROFILE
+  // ========================================
+  async function handleSave(e) {
+    e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    if (!formData.name.trim() || formData.name.trim().length < 2) {
+      setError("Name must be at least 2 characters long.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await updateMyProfile({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+      });
+
+      setProfile(response.user);
+
+      setFormData({
+        name: response.user.name || "",
+        phone: response.user.phone || "",
+        address: response.user.address || "",
+      });
+
+      setIsEditing(false);
+      setSuccess("Your profile has been updated successfully.");
+    } catch (err) {
+      console.error("Profile update error:", err);
+
+      if (err.status === 401) {
+        router.replace("/login");
+        return;
+      }
+
+      setError(err.message || "Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ========================================
+  // LOGOUT
+  // ========================================
+  async function handleLogout() {
+    try {
+      setLoggingOut(true);
+
+      await logoutUser();
+
+      router.replace("/login");
+      router.refresh();
+    } catch (err) {
+      console.error("Logout error:", err);
+      setError("Failed to logout. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
+  // ========================================
+  // LOADING STATE
+  // ========================================
+  if (loading) {
+    return (
+      <div className="flex min-h-[280px] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <LoaderCircle
+            size={32}
+            className="animate-spin text-[#9b805e]"
+          />
+          <p className="text-sm text-gray-500">
+            Loading your profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // ERROR STATE
+  // ========================================
+  if (!profile && error) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-center">
+          <AlertCircle className="mx-auto mb-3 text-red-500" size={30} />
+
+          <h2 className="font-semibold text-gray-900">
+            Unable to load profile
+          </h2>
+
+          <p className="mt-2 text-sm text-red-600">{error}</p>
+
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // PROFILE DATA
+  // ========================================
+  const initials =
+    profile?.name
+      ?.split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U";
+
+  const emailVerified =
+    session?.user?.emailVerified ?? false;
+
+  const memberSince =
+    session?.user?.createdAt || null;
+
+  // ========================================
+  // UI
+  // ========================================
   return (
-    <ProtectedRoute>
-      <main className="bg-[#f7f7f5] px-3 py-4 sm:px-5 sm:py-6">
-        <div className="mx-auto w-full max-w-3xl">
+    <main className="w-full bg-[#f5f3ee] px-3 py-5 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-4xl">
 
-          {/* Page Heading */}
-          <div className="mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9b805e]">
-              MY ACCOUNT
-            </p>
+        {/* PAGE HEADER */}
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9b805e]">
+            VELOR OUTFITS
+          </p>
 
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#171715] sm:text-3xl">
-              My Account
-            </h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#171715] sm:text-3xl">
+            My Account
+          </h1>
 
-            <p className="mt-1 text-xs text-gray-500 sm:text-sm">
-              Account overview · Profile information
-            </p>
+          <p className="mt-2 text-sm text-gray-500">
+            Manage your personal information and account details.
+          </p>
+        </div>
+
+        {/* SUCCESS MESSAGE */}
+        {success && (
+          <div className="mb-5 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+            <CheckCircle2 size={18} />
+            {success}
           </div>
+        )}
 
-          {/* Profile Card */}
-          <section className="overflow-hidden rounded-2xl border border-[#eae7e1] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.035)]">
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            <AlertCircle size={18} />
+            {error}
+          </div>
+        )}
 
-            {/* Identity */}
-            <div className="p-4 sm:p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#eee9e1] text-lg font-bold text-[#826b4d] sm:h-16 sm:w-16 sm:text-xl">
-                  {user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name || "User"}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initials
-                  )}
-                </div>
+        {/* ACCOUNT CARD */}
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
 
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-lg font-semibold text-[#171715] sm:text-xl">
-                    {user.name || "User"}
-                  </h2>
+          {/* IDENTITY SECTION */}
+          <div className="flex flex-col gap-4 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:p-7">
 
-                  <p className="mt-0.5 break-all text-xs text-gray-500 sm:text-sm">
-                    {user.email}
-                  </p>
+            {/* AVATAR */}
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e9e1d5] text-xl font-semibold text-[#80694c]">
+              {profile.image ? (
+                <img
+                  src={profile.image}
+                  alt={profile.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initials
+              )}
+            </div>
 
-                  <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-[10px] font-medium text-green-700 sm:text-xs">
-                    <ShieldCheck size={13} />
-                    {user.emailVerified
-                      ? "Verified account"
-                      : "Account"}
-                  </div>
-                </div>
+            {/* USER INFO */}
+            <div className="min-w-0 flex-1">
+              <h2 className="break-words text-xl font-semibold text-[#171715]">
+                {profile.name}
+              </h2>
+
+              <p className="mt-1 break-all text-sm text-gray-500">
+                {profile.email}
+              </p>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                  <ShieldCheck size={13} />
+                  {profile.role || "user"}
+                </span>
+
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    emailVerified
+                      ? "bg-blue-50 text-blue-700"
+                      : "bg-yellow-50 text-yellow-700"
+                  }`}
+                >
+                  {emailVerified
+                    ? "Email Verified"
+                    : "Email Not Verified"}
+                </span>
               </div>
             </div>
 
-            <div className="mx-4 border-t border-gray-100 sm:mx-5" />
+            {/* EDIT BUTTON */}
+            {!isEditing && (
+              <button
+                onClick={handleEdit}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                <Pencil size={15} />
+                Edit Profile
+              </button>
+            )}
+          </div>
 
-            {/* Account Information */}
-            <div className="p-4 sm:p-5">
-              <h3 className="mb-3 text-sm font-semibold text-[#171715] sm:text-base">
-                Account Information
+          {/* PROFILE INFORMATION */}
+          <div className="p-5 sm:p-7">
+
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#171715]">
+                Personal Information
               </h3>
 
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              {isEditing && (
+                <span className="text-xs text-[#9b805e]">
+                  Editing mode
+                </span>
+              )}
+            </div>
 
-                {/* Name */}
-                <div className="rounded-xl bg-[#f8f8f7] p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-gray-400">
-                    <UserRound size={14} />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]">
+            {/* EDIT FORM */}
+            {isEditing ? (
+              <form onSubmit={handleSave} className="space-y-5">
+
+                {/* NAME */}
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Full Name
+                  </label>
+
+                  <div className="relative">
+                    <UserRound
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      minLength={2}
+                      maxLength={100}
+                      className="w-full rounded-lg border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none transition focus:border-[#9b805e] focus:ring-2 focus:ring-[#9b805e]/10"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                </div>
+
+                {/* PHONE */}
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Phone Number
+                  </label>
+
+                  <div className="relative">
+                    <Phone
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      maxLength={30}
+                      className="w-full rounded-lg border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none transition focus:border-[#9b805e] focus:ring-2 focus:ring-[#9b805e]/10"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                </div>
+
+                {/* ADDRESS */}
+                <div>
+                  <label
+                    htmlFor="address"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Address
+                  </label>
+
+                  <div className="relative">
+                    <MapPin
+                      size={18}
+                      className="absolute left-3 top-4 text-gray-400"
+                    />
+
+                    <textarea
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      maxLength={500}
+                      rows={3}
+                      className="w-full resize-y rounded-lg border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none transition focus:border-[#9b805e] focus:ring-2 focus:ring-[#9b805e]/10"
+                      placeholder="Enter your address"
+                    />
+                  </div>
+                </div>
+
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <X size={16} />
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#171715] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? (
+                      <>
+                        <LoaderCircle size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* VIEW MODE */
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                {/* NAME */}
+                <div className="rounded-xl bg-[#f8f7f4] p-4">
+                  <div className="mb-2 flex items-center gap-2 text-gray-400">
+                    <UserRound size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wider">
                       Full Name
                     </span>
                   </div>
 
-                  <p className="break-words text-xs font-semibold text-[#171715] sm:text-sm">
-                    {user.name || "Not available"}
+                  <p className="break-words text-sm font-medium text-gray-800">
+                    {profile.name || "Not provided"}
                   </p>
                 </div>
 
-                {/* Email */}
-                <div className="rounded-xl bg-[#f8f8f7] p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-gray-400">
-                    <Mail size={14} />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]">
+                {/* EMAIL */}
+                <div className="rounded-xl bg-[#f8f7f4] p-4">
+                  <div className="mb-2 flex items-center gap-2 text-gray-400">
+                    <Mail size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wider">
                       Email Address
                     </span>
                   </div>
 
-                  <p className="break-all text-xs font-semibold text-[#171715] sm:text-sm">
-                    {user.email || "Not available"}
+                  <p className="break-all text-sm font-medium text-gray-800">
+                    {profile.email || "Not provided"}
                   </p>
                 </div>
 
-                {/* Status */}
-                <div className="rounded-xl bg-[#f8f8f7] p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-gray-400">
-                    <ShieldCheck size={14} />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]">
-                      Account Status
+                {/* PHONE */}
+                <div className="rounded-xl bg-[#f8f7f4] p-4">
+                  <div className="mb-2 flex items-center gap-2 text-gray-400">
+                    <Phone size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Phone Number
                     </span>
                   </div>
 
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-green-700 sm:text-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                    Active
+                  <p className="break-words text-sm font-medium text-gray-800">
+                    {profile.phone || "Not provided"}
                   </p>
                 </div>
 
-                {/* Member Since */}
-                <div className="rounded-xl bg-[#f8f8f7] p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-gray-400">
-                    <CalendarDays size={14} />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider sm:text-[10px]">
+                {/* ADDRESS */}
+                <div className="rounded-xl bg-[#f8f7f4] p-4">
+                  <div className="mb-2 flex items-center gap-2 text-gray-400">
+                    <MapPin size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wider">
+                      Address
+                    </span>
+                  </div>
+
+                  <p className="break-words whitespace-pre-wrap text-sm font-medium text-gray-800">
+                    {profile.address || "Not provided"}
+                  </p>
+                </div>
+
+                {/* MEMBER SINCE */}
+                <div className="rounded-xl bg-[#f8f7f4] p-4 sm:col-span-2">
+                  <div className="mb-2 flex items-center gap-2 text-gray-400">
+                    <ShieldCheck size={16} />
+                    <span className="text-xs font-medium uppercase tracking-wider">
                       Member Since
                     </span>
                   </div>
 
-                  <p className="text-xs font-semibold text-[#171715] sm:text-sm">
-                    {formatDate(user.createdAt)}
+                  <p className="text-sm font-medium text-gray-800">
+                    {formatDate(memberSince)}
                   </p>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* ACCOUNT ACTIONS */}
+          <div className="border-t border-gray-100 bg-[#fafaf9] p-5 sm:p-7">
+            <h3 className="mb-4 text-base font-semibold text-[#171715]">
+              Account Actions
+            </h3>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+
+              {/* MY ORDERS */}
+              <Link
+                href="/orders"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                <Package size={17} />
+                My Orders
+              </Link>
+
+              {/* LOGOUT */}
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-100 bg-white px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+              >
+                {loggingOut ? (
+                  <LoaderCircle size={17} className="animate-spin" />
+                ) : (
+                  <LogOut size={17} />
+                )}
+
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
             </div>
-
-            <div className="mx-4 border-t border-gray-100 sm:mx-5" />
-
-            {/* Actions */}
-            <div className="p-4 sm:p-5">
-              <h3 className="mb-3 text-sm font-semibold text-[#171715]">
-                Account Actions
-              </h3>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <Link
-                  href="/my-orders"
-                  className="group flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-3 text-xs font-semibold text-[#171715] transition hover:border-[#c6a77b] hover:bg-[#faf9f7] sm:text-sm"
-                >
-                  <ShoppingBag size={16} />
-                  My Orders
-                  <ChevronRight
-                    size={14}
-                    className="hidden transition group-hover:translate-x-0.5 sm:block"
-                  />
-                </Link>
-
-                <button
-                  onClick={handleLogout}
-                  disabled={logoutLoading}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-red-100 px-3 py-3 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
-                >
-                  {logoutLoading ? (
-                    <LoaderCircle size={16} className="animate-spin" />
-                  ) : (
-                    <LogOut size={16} />
-                  )}
-
-                  {logoutLoading ? "Logging out..." : "Logout"}
-                </button>
-              </div>
-
-              {logoutError && (
-                <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
-                  {logoutError}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <p className="mt-3 text-center text-[10px] text-gray-400">
-            VELOR OUTFITS · Your account information
-          </p>
+          </div>
         </div>
-      </main>
+
+        {/* FOOTER NOTE */}
+        <p className="mt-4 text-center text-xs leading-5 text-gray-400">
+          Your personal information is securely managed by VELOR OUTFITS.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+// ========================================
+// PAGE COMPONENT
+// ========================================
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
     </ProtectedRoute>
   );
 }
