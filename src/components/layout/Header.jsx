@@ -1,5 +1,6 @@
 
 import AnnouncementBar from "./AnnouncementBar";
+
 import Navbar from "./Navbar";
 
 export default function Header() {
@@ -7,6 +8,7 @@ export default function Header() {
     <header className="relative z-50">
       <AnnouncementBar />
       <Navbar />
+
     </header>
   );
 }
